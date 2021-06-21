@@ -1,0 +1,6 @@
+*.conf
+*.sam
+*.bam
+*.gz
+*_fastqc.*
+*.log
