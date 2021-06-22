@@ -1,0 +1,26 @@
+Software, Installed_by, Installed_ways, Version, SRC_Location, BIN_Location
+sphinx, Ziwei Xue, conda, 3.2.1, NA, /home/labw/anaconda3
+kerneltree, Ziwei Xue, conda, 0.0.5, NA, /home/labw/anaconda3
+alignqc, Ziwei Xue, conda, 2.0.5, NA, /home/labw/anaconda3/envs/alignqc
+IsoTV, Ziwei Xue, git, c2b0c9ae653cecd7c7c32fd967eda0e5e17eae93, /home/labw/Biosoft/IsoTV, /home/labw/Biosoft/IsoTV/scripts
+bcftools, Ziwei Xue, Compile, 1.3.1, /home/labw/Biosoft/bcftools-1.3.1, /home/labw/Biosoft/bcftools-1.3.1
+bedtools, Ziwei Xue, bin, 2.30.0, NA, /home/labw/Biosoft/bedtools-2.30.0/bin
+bowtie, Ziwei Xue, Compile, 1.3.0, /home/labw/Biosoft/bowtie-1.3.0-linux-x86_64, /home/labw/Biosoft/bowtie-1.3.0-linux-x86_64/bin
+duf, Ziwei Xue, Compile, 0.6.2, /home/labw/Biosoft/duf, /home/labw/Biosoft/duf/bin
+fastqc, Ziwei Xue, bin, 0.11.9, NA, /home/labw/Biosoft/FastQC
+flair, Ziwei Xue, NA, 1.5.1, /home/labw/Biosoft/flair, /home/labw/Biosoft/flair
+gclib, Ziwei Xue, NA, NA, /home/labw/Biosoft/gclib, NA
+gffread, Ziwei Xue, git, NA, /home/labw/Biosoft/gffread,NA
+go, Ziwei Xue, bin, 1.15.7, /home/labw/Biosoft/go, /home/labw/Biosoft/go/bin
+homer, Ziwei Xue, bin, 4.11.1 , /home/labw/Biosoft/homer, /home/labw/Biosoft/homer/bin
+htslib, Ziwei Xue, Compile,1.12, /home/labw/Biosoft/htslib-1.12,/usr/local/bin
+LongQC, Ziwei Xue, git, 1.2.0b, /home/labw/Biosoft/LongQC, /home/labw/Biosoft/LongQC
+minimap2, Ziwei Xue, bin,2.18, NA, /home/labw/Biosoft/minimap2-2.18_x64-linux
+pinfish, Ziwei Xue, NA, 0.1.0, /home/labw/Biosoft/pinfish/, /home/labw/Biosoft/pinfish/build/bin
+racon, Ziwei Xue, Compile, 1.4.3, /home/labw/Biosoft/racon-v1.4.3/, /home/labw/Biosoft/racon-v1.4.3/build/bin
+ropebwt2, Ziwei Xue, git, bd8dbd3db2e9e3cff74acc2907c0742c9ebbf033, /home/labw/Biosoft/ropebwt2, /home/labw/Biosoft/ropebwt2
+RSEM, Ziwei Xue, NA, 1.2.31, NA, /home/labw/Biosoft/RSEM/RSEM-1.2.31
+samtools, Ziwei Xue, Compile,1.12, /home/labw/Biosoft/samtools-1.12,/usr/local/bin/bin
+sratoolkit, Ziwei Xue, NA, 2.11.0, NA, /home/labw/Biosoft/sratoolkit.2.11.0-ubuntu64/bin
+STAR, Ziwei Xue, NA, 2.7.8a, NA, /home/labw/Biosoft/STAR-2.7.8a/bin/Linux_x86_64/
+rust-fmlrc, Ziwei Xue,Compile,,/home/labw/Biosoft/rust-fmlrc,/home/labw/Biosoft/rust-fmlrc/target/release/

@@ -4,3 +4,5 @@
 *.gz
 *_fastqc.*
 *.log
+.idea/
+.vscode/

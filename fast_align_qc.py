@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Author: Ziwei Xue
+# Modified by YU Zhejian
 
 import pysam
 import argparse
@@ -33,67 +34,77 @@ BBLUE   = "\033[0;37;44m"
 NC      = "\033[0m"
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-fa', '--fasta', type=str, help='input reference genome in (GZipped) fasta format') # FIXME: None-standard short arguments
-parser.add_argument('-b', '--bam', type=str, help='input alignment file in sam/bam')
+parser.add_argument('-f', '--fastq', type=str, help='input read file in (GZipped) fastq format')
+parser.add_argument('-b', '--bam', type=str, help='input alignment file in sam/bam. Index needed for bam')
 parser.add_argument('-o', '--out', type=str, help='output prefix')
 
 args = parser.parse_args()
 
-all_reads = dict()
+all_reads = dict() # Store the fasta file in readId-read pair
 perc_alignment = 0
 
-print(LGREEN + "Reading\t" + NC + args.fasta)
+print(LGREEN + "Reading\t" + NC + args.fasta,end="")
 
+flag = False
 if args.fasta.endswith(".gz"):
-	flag = False
-	read_id = None
+	read_id = ""
 	with gzip.open(args.fasta, 'r') as fp:
 		while s := fp.readline():
-			s = s.decode("utf-8") 
+			s = s.decode("utf-8")
 			if flag:
 				all_reads[read_id] = s.strip()
-				flag = False
-			elif s.startswith("@"):
+				flag = False # Read one line only
+			if s.startswith("@"):
+				# @84443138-6ebe-4314-9eb0-372e5d1220c6 runid=5c36a9dc99329515d5cdea36d6fbb6fd327cd511 read=19358 ch=1108 start_time=2020-10-31T15:01:48Z flow_cell_id=PAF26057 protocol_group_id=FONR20H101138-1A sample_id=FONR20H101138-1A barcode=barcode23
 				read_id = s.split(" ")[0][1:]
 				flag = True
-			else:
-				pass
 
-elif args.fasta.endswith(".fastastq") or args.fasta.endswith(".fq"): # TODO: What is fastastq?
+elif args.fasta.endswith(".fastq") or args.fasta.endswith(".fq") or args.fasta.endswith(".fasta") or args.fasta.endswith(".fa"):
 	with open(args.fasta, 'r') as fp:
 		while s:= fp.readline(): 
 			if flag:
 				all_reads[read_id] = s.strip()
-			if s.startswith("@"):
+			elif s.startswith("@"):
 				read_id = s.split(" ")[0][1:]
+			else:
+				pass
 else:
-	raise TypeError(" error")
+	raise TypeError("The reference sequence should be either suffixed by fastq, fq, fasta or fa.")
+
+if len(all_reads) == 0:
+	raise TypeError("No readable reads identified. Do you passed in a reference genome?")
+print(len(all_reads) +" was read")
 
 print(LGREEN + "Reading\t" + NC + args.bam)
-mapped_reads = pysam.AlignmentFile(args.bam)
-all_reads_tmp = set(all_reads.keys())
-mapped_reads_tmp = set()
-multi_mapped = set()
+
+if (args.bam.endswith("bam")):
+	mapped_reads = pysam.AlignmentFile(args.bam,'rb')
+elif (args.bam.endswith("sam")):
+	mapped_reads = pysam.AlignmentFile(args.bam,'r')
+all_reads_tmp = set(all_reads.keys()) # All readIds already identified in fastq
+mapped_reads_tmp = set() # readIds already identified in BAM
+multi_mapped = set() # All multi-mapped readIds
 alignment_stats = []
 perc_bases = 0
-mapped_length = []
-unmapped_length = []
+mapped_length = [] # Mapped reads length distribution
+unmapped_length = [] # Unmapped reads length distribution
 mapped_num = 0
 
 # Step through all of the reads
-for i in mapped_reads.fetch():
+# FIXME: Need to be implemented
+for i in mapped_reads.fetch(): # Get all reads from BAM
 	if i.qname in all_reads_tmp and not i.is_unmapped:
-		if i.qname in mapped_reads_tmp:
+		if i.qname in mapped_reads_tmp: # Reads already identified, which means it is multi-mapped (secondary)
 			multi_mapped.add(i.qname)
 			mapped_length.append(["Multiply Aligned", len(all_reads[i.qname])])
-			mapped_num += 1
-		else:
+		else: # Reads not identified
 			all_reads_tmp.remove(i.qname)
 			mapped_reads_tmp.add(i.qname)
+			print(i.qname)
 			cigar = i.cigartuples
-			aligned_bases = sum(map(lambda x:x[1], filter(lambda y:y[0] == 0, cigar)))
-			mapped_num += 1
-			perc_bases = (perc_bases * (mapped_num-1) + aligned_bases/i.query_length) / mapped_num
+			aligned_bases = sum(map(lambda x:x[1], filter(lambda y:y[0] == 0, cigar))) # ?
+			perc_bases = (perc_bases * (mapped_num-1) + aligned_bases/i.query_length) / mapped_num # ?
+		mapped_num += 1
 
 for i in mapped_reads_tmp:
 	unmapped_length.append(["Uniquely Aligned", len(all_reads[i])])
@@ -103,7 +114,7 @@ for i in all_reads_tmp:
 
 perc_alignment = mapped_num / len(all_reads)
 
-print(YELLOW + str(perc_alignment*100) + "%" + NC + "\tof reads aligned")
+print(YELLOW + str(round(perc_alignment*100), 2) + "%" + NC + "\tof reads aligned")
 
 df = pd.DataFrame(mapped_length + unmapped_length)
 df.columns=["Align","Length"]
@@ -112,9 +123,9 @@ vals = {i:df["Length"].values.tolist() for i, df in df_agg}
 
 print(YELLOW + str(len(vals["Uniquely Aligned"])/mapped_num*100) + "%" + NC + "\tof uniquely aligned reads")
 if "Multiply Aligned" in vals.keys():
-	print(YELLOW + str(len(vals["Multiply Aligned"])/mapped_num*100) + "%" + NC + "\tof uniquely aligned reads")
+	print(YELLOW + str(len(vals["Multiply Aligned"])/mapped_num*100) + "%" + NC + "\tof multiply aligned reads")
 else:
-	print(YELLOW + "0%" + NC + "of uniquely aligned reads")
+	print(YELLOW + "0%" + NC + "\tof multiply aligned reads")
 
 if len(vals.keys()) == 2:
 	colors=["#777777", "#FFFFFF"]
@@ -122,8 +133,6 @@ if len(vals.keys()) == 2:
 else:
 	colors=["#777777", "#057DFF","#FFFFFF"]
 	vals = [vals["Uniquely Aligned"], vals["Multiply Aligned"], vals["Not Aligned"]]
-
-
 
 matplotlib.rcParams['font.family'] = 'Arial'
 matplotlib.rcParams['font.size'] = '16'

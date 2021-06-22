@@ -2,9 +2,9 @@
 # VERSION 1.0
 
 set -e # Prevent blank variables and stop when error raised
-REFERENCE_FASTA="/home/pub/References/GATK_hg38/hg38.fa"
-THREAD=40
-__conda_setup="$("${HOME}/conda/bin/conda" 'shell.bash' 'hook' 2> /dev/null)"
+REFERENCE_FASTA="${HOME}/Refdata/ensembl/fa/Homo_sapiens.GRCh38.97.dna.primary_assembly.fa"
+THREAD=1
+__conda_setup="$("${HOME}/anaconda3/bin/conda" 'shell.bash' 'hook' 2> /dev/null)"
 eval "${__conda_setup}"
 
 
@@ -28,6 +28,7 @@ getcorenumber() {
         cat /proc/cpuinfo | grep '^processor\s: ' | wc -l | awk '{print $1}'
     fi
 }
+THREAD=$(getcorenumber) # Use all threads
 killtree() {
     kill -19 ${1} || return
     for CPID in $(ps -o pid --no-headers --ppid ${1}); do
@@ -69,28 +70,34 @@ preqc_nanoplot(){
 
 # This is not used because it rediculously dumped out SAM format.
 align_flair(){
-    conda_activate flair
+    # conda_activate flair # Do not have this thing on LabW_GPU
+    PATH="/home/labw/Biosoft/flair:${PATH:-}"
     flair.py align -g "${REFERENCE_FASTA}" \
     -r "${1}.fastq.gz" \
     -t ${THREAD} \
     -o "${1}.aligned"
-    conda deactivate
+    # conda deactivate
 }
 
 # This program uses the following steps to reduce disk space:
 # firstly it asks miminap to dump SAM format
 # Then uses samtools to convert it to compressed BAM
 align_minimap(){
+    [ -f "${1}.fastq.gz" ] && [ -f "${REFERENCE_FASTA}" ]
+    [ -f "${1}.aligned.unsorted.bam" ] || \
     minimap2 -ax splice \
     -t ${THREAD} \
     --secondary=no \
     "${REFERENCE_FASTA}" "${1}.fastq.gz" | \
-    samtools view -h \
-    -@ ${THREAD} > "${1}.aligned.unsorted.bam"
+    samtools sort \
+    -@ ${THREAD} -o "${1}.aligned.sorted.bam"
+    samtools index "${1}.aligned.sorted.bam"
+    bam2Bed12.py -i "${1}.aligned.sorted.bam" > "${1}.bed"
 }
 
-
+# This program is not used for laege memory consumption
 qc_alignqc(){
+    FINE2_a_PAF26057_test.fastq.gz
     conda_activate alignqc
     alignqc analyze "${1}.aligned.unsorted.bam" -g "${REFERENCE_FASTA}" \
     --no_transcriptome \
@@ -105,15 +112,17 @@ align(){
     align_minimap "${@}"
 }
 
-qc(){
+afteralign_qc(){
     qc_alignqc "${@}"
 }
+
+
 
 main(){
     [ -f data.conf ]
     cat data.conf | while read line;do
         # align "${line}"
-        qc "${line}"
+        afteralign_qc "${line}"
     done
 }
 
