@@ -59,16 +59,18 @@ conda_activate(){
 
 ######################## Scripts starting from here do the job ########################
 
-preqc_nanoplot(){
+prealignqc_nanoplot(){
     conda_activate nanoplot
     NanoPlot --fastq "${1}.fastq.gz" \
     -o "${1}.nanoplot" \
     -t 40 \
     --verbose \
     --plots kde hex dot pauvre
+    conda deactivate
 }
 
-# This is not used because it rediculously dumped out SAM format.
+# This is not used because it ridiculously dumped out SAM format.
+# And have bugs sorting
 align_flair(){
     # conda_activate flair # Do not have this thing on LabW_GPU
     PATH="/home/labw/Biosoft/flair:${PATH:-}"
@@ -92,12 +94,11 @@ align_minimap(){
     samtools sort \
     -@ ${THREAD} -o "${1}.aligned.sorted.bam"
     samtools index "${1}.aligned.sorted.bam"
-    bam2Bed12.py -i "${1}.aligned.sorted.bam" > "${1}.bed"
+    bam2Bed12.py -i "${1}.aligned.sorted.bam" > "${1}.bed" # bam2Bed12.py should be found in flair
 }
 
 # This program is not used for laege memory consumption
-qc_alignqc(){
-    FINE2_a_PAF26057_test.fastq.gz
+afteralign_qc_alignqc(){
     conda_activate alignqc
     alignqc analyze "${1}.aligned.unsorted.bam" -g "${REFERENCE_FASTA}" \
     --no_transcriptome \
@@ -113,7 +114,7 @@ align(){
 }
 
 afteralign_qc(){
-    qc_alignqc "${@}"
+    afteralign_qc_alignqc "${@}"
 }
 
 
@@ -121,7 +122,7 @@ afteralign_qc(){
 main(){
     [ -f data.conf ]
     cat data.conf | while read line;do
-        # align "${line}"
+        align "${line}"
         afteralign_qc "${line}"
     done
 }
